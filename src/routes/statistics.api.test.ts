@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import fastify from 'fastify';
 import { registerRoutes, createDeps } from './index';
 import { prisma } from '../services';
+import { stopGlobalWorker } from '../core';
 
 describe('Statistics API', () => {
   const app = fastify();
@@ -13,16 +14,19 @@ describe('Statistics API', () => {
   });
 
   afterAll(async () => {
+    stopGlobalWorker();
     await app.close();
   });
 
   beforeEach(async () => {
+    await prisma.deliveryTask.deleteMany({});
     await prisma.deliveryAttempt.deleteMany({});
     await prisma.webhookEvent.deleteMany({});
     await prisma.webhookEndpoint.deleteMany({});
   });
 
   afterEach(async () => {
+    await prisma.deliveryTask.deleteMany({});
     await prisma.deliveryAttempt.deleteMany({});
     await prisma.webhookEvent.deleteMany({});
     await prisma.webhookEndpoint.deleteMany({});

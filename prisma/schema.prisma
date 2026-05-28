@@ -50,3 +50,20 @@ model DeliveryAttempt {
   @@index([createdAt])
   @@unique([eventId, endpointId, attemptNumber])
 }
+
+model DeliveryTask {
+  id             String         @id @default(uuid())
+  eventId        String
+  endpointId     String
+  attemptNumber  Int            @default(1)
+  status         String         @default("pending")
+  nextRetryAt    DateTime?
+  lastError      String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([status])
+  @@index([nextRetryAt])
+  @@index([eventId])
+  @@index([endpointId])
+}

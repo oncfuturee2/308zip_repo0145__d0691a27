@@ -3,3 +3,4 @@ export * from './webhook-endpoint.service';
 export * from './webhook-event.service';
 export * from './delivery.service';
 export * from './statistics.service';
+export * from './queue.service';

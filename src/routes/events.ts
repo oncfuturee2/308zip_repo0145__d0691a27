@@ -19,9 +19,9 @@ export function registerEventRoutes(
     '/events',
     async (request: FastifyRequest, reply: FastifyReply) => {
       const body = createEventSchema.parse(request.body);
-      
+
       const event = await deps.eventService.create(body);
-      
+
       const allEndpoints = await deps.endpointService.findMatchingEndpoints(body.eventType);
       const matchingEndpoints = deps.eventService.filterMatchingEndpoints(
         allEndpoints,
@@ -29,7 +29,7 @@ export function registerEventRoutes(
       );
 
       if (matchingEndpoints.length === 0) {
-        return reply.status(201).send({
+        return reply.status(202).send({
           message: 'Event created, no matching endpoints found',
           event: {
             id: event.id,
@@ -37,26 +37,22 @@ export function registerEventRoutes(
             createdAt: event.createdAt
           },
           matchedEndpoints: 0,
-          deliveryAttempts: []
+          enqueuedTasks: 0
         });
       }
 
-      const deliveryAttempts = [];
+      const endpointIds = matchingEndpoints.map(ep => ep.id);
+      const tasks = await deps.queueService.enqueueTasksForEvent(event.id, endpointIds);
 
-      for (const endpoint of matchingEndpoints) {
-        const attempt = await deps.deliveryService.executeDelivery(event, endpoint, 1);
-        deliveryAttempts.push(attempt);
-      }
-
-      return reply.status(201).send({
-        message: 'Event created and delivered to matching endpoints',
+      return reply.status(202).send({
+        message: 'Event created and delivery tasks enqueued',
         event: {
           id: event.id,
           eventType: event.eventType,
           createdAt: event.createdAt
         },
         matchedEndpoints: matchingEndpoints.length,
-        deliveryAttempts
+        enqueuedTasks: tasks.length
       });
     }
   );
@@ -74,11 +70,11 @@ export function registerEventRoutes(
     async (request: FastifyRequest, reply: FastifyReply) => {
       const params = eventIdSchema.parse(request.params);
       const event = await deps.eventService.findById(params.id);
-      
+
       if (!event) {
         return reply.status(404).send({ error: 'Event not found' });
       }
-      
+
       return reply.send(event);
     }
   );
@@ -87,14 +83,29 @@ export function registerEventRoutes(
     '/events/:id/attempts',
     async (request: FastifyRequest, reply: FastifyReply) => {
       const params = eventIdSchema.parse(request.params);
-      
+
       const event = await deps.eventService.findById(params.id);
       if (!event) {
         return reply.status(404).send({ error: 'Event not found' });
       }
-      
+
       const attempts = await deps.deliveryService.findByEventId(params.id);
       return reply.send(attempts);
+    }
+  );
+
+  fastify.get(
+    '/events/:id/tasks',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const params = eventIdSchema.parse(request.params);
+
+      const event = await deps.eventService.findById(params.id);
+      if (!event) {
+        return reply.status(404).send({ error: 'Event not found' });
+      }
+
+      const tasks = await deps.queueService.getTasksByEventId(params.id);
+      return reply.send(tasks);
     }
   );
 }

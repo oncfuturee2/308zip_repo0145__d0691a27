@@ -7,14 +7,17 @@ import {
   WebhookEndpointService,
   WebhookEventService,
   DeliveryService,
-  StatisticsService
+  StatisticsService,
+  QueueService
 } from '../services';
 import {
   EventMatcher,
   SignatureGenerator,
   MockHttpClient,
   DeliveryExecutor,
-  RetryStrategy
+  RetryStrategy,
+  DeliveryWorker,
+  createAndStartWorker
 } from '../core';
 
 export interface RouteDeps {
@@ -23,6 +26,8 @@ export interface RouteDeps {
   deliveryService: DeliveryService;
   statisticsService: StatisticsService;
   eventMatcher: EventMatcher;
+  queueService: QueueService;
+  worker: DeliveryWorker;
 }
 
 export function createDeps(): RouteDeps {
@@ -36,13 +41,22 @@ export function createDeps(): RouteDeps {
   const eventService = new WebhookEventService(eventMatcher);
   const deliveryService = new DeliveryService(deliveryExecutor, retryStrategy);
   const statisticsService = new StatisticsService();
+  const queueService = new QueueService(retryStrategy);
+
+  const worker = createAndStartWorker({
+    queueService,
+    deliveryService,
+    retryStrategy
+  });
 
   return {
     endpointService,
     eventService,
     deliveryService,
     statisticsService,
-    eventMatcher
+    eventMatcher,
+    queueService,
+    worker
   };
 }
 
