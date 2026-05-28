@@ -1,5 +1,5 @@
 import { prisma } from './prisma-client';
-import { DeliveryAttempt, WebhookEvent, WebhookEndpoint } from '@prisma/client';
+import { DeliveryAttempt, Prisma, WebhookEvent, WebhookEndpoint } from '@prisma/client';
 import { 
   DeliveryExecutor, 
   DeliveryRequest, 
@@ -22,6 +22,10 @@ export class MaxAttemptsExceededError extends Error {
 export class DeliveryService {
   private readonly deliveryExecutor: DeliveryExecutor;
   private readonly retryStrategy: RetryStrategy;
+  private readonly detailedAttemptFindManyArgs = {
+    include: { event: true, endpoint: true },
+    orderBy: { createdAt: 'desc' }
+  } satisfies Pick<Prisma.DeliveryAttemptFindManyArgs, 'include' | 'orderBy'>;
 
   constructor(
     deliveryExecutor: DeliveryExecutor,
@@ -136,16 +140,14 @@ export class DeliveryService {
   async findByEndpointId(endpointId: string): Promise<DeliveryAttemptWithDetails[]> {
     return prisma.deliveryAttempt.findMany({
       where: { endpointId },
-      include: { event: true, endpoint: true },
-      orderBy: { createdAt: 'desc' }
+      ...this.detailedAttemptFindManyArgs
     });
   }
 
   async findByEventId(eventId: string): Promise<DeliveryAttemptWithDetails[]> {
     return prisma.deliveryAttempt.findMany({
       where: { eventId },
-      include: { event: true, endpoint: true },
-      orderBy: { createdAt: 'desc' }
+      ...this.detailedAttemptFindManyArgs
     });
   }
 
@@ -157,10 +159,7 @@ export class DeliveryService {
   }
 
   async findAll(): Promise<DeliveryAttemptWithDetails[]> {
-    return prisma.deliveryAttempt.findMany({
-      include: { event: true, endpoint: true },
-      orderBy: { createdAt: 'desc' }
-    });
+    return prisma.deliveryAttempt.findMany(this.detailedAttemptFindManyArgs);
   }
 
   async findFailedAttempts(endpointId?: string): Promise<DeliveryAttemptWithDetails[]> {
@@ -171,8 +170,7 @@ export class DeliveryService {
 
     return prisma.deliveryAttempt.findMany({
       where,
-      include: { event: true, endpoint: true },
-      orderBy: { createdAt: 'desc' }
+      ...this.detailedAttemptFindManyArgs
     });
   }
 
