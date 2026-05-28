@@ -35,6 +35,14 @@ export interface StatisticsResult {
   breakdown: DeliveryBreakdown;
 }
 
+export interface HealthDetailedResult {
+  status: string;
+  activeEndpoints: number;
+  totalEvents: number;
+  failedDeliveries: number;
+  timestamp: string;
+}
+
 export interface TimeRangeFilter {
   startTime?: Date;
   endTime?: Date;
@@ -200,6 +208,22 @@ export class StatisticsService {
         byEndpoint,
         byEventType,
       },
+    };
+  }
+
+  async getHealthDetailed(): Promise<HealthDetailedResult> {
+    const [activeEndpoints, totalEvents, failedDeliveries] = await Promise.all([
+      prisma.webhookEndpoint.count({ where: { isActive: true } }),
+      prisma.webhookEvent.count(),
+      prisma.deliveryAttempt.count({ where: { isSuccess: false } }),
+    ]);
+
+    return {
+      status: 'ok',
+      activeEndpoints,
+      totalEvents,
+      failedDeliveries,
+      timestamp: new Date().toISOString(),
     };
   }
 }
