@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model WebhookEndpoint {
+  id              String         @id @default(uuid())
+  url             String
+  eventTypes      String         @default("*")
+  secret          String
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  deliveryAttempts DeliveryAttempt[]
+
+  @@index([isActive])
+}
+
+model WebhookEvent {
+  id              String         @id @default(uuid())
+  eventType       String
+  payload         String
+  createdAt       DateTime       @default(now())
+  deliveryAttempts DeliveryAttempt[]
+
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+model DeliveryAttempt {
+  id             String         @id @default(uuid())
+  eventId        String
+  endpointId     String
+  event          WebhookEvent   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  endpoint       WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  statusCode     Int?
+  durationMs     Int
+  isSuccess      Boolean
+  errorMessage   String?
+  attemptNumber  Int            @default(1)
+  createdAt      DateTime       @default(now())
+
+  @@index([eventId])
+  @@index([endpointId])
+  @@index([isSuccess])
+  @@index([createdAt])
+  @@unique([eventId, endpointId, attemptNumber])
+}
