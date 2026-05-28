@@ -37,6 +37,15 @@ export class DeliveryService {
     });
   }
 
+  async getMaxAttemptNumber(eventId: string, endpointId: string): Promise<number> {
+    const result = await prisma.deliveryAttempt.aggregate({
+      where: { eventId, endpointId },
+      _max: { attemptNumber: true }
+    });
+
+    return result._max.attemptNumber ?? 0;
+  }
+
   async canRetryByAttemptCount(eventId: string, endpointId: string): Promise<boolean> {
     const currentCount = await this.getAttemptCount(eventId, endpointId);
     return this.retryStrategy.canRetryByAttempt(currentCount);
@@ -110,21 +119,21 @@ export class DeliveryService {
       throw new Error(`Cannot retry delivery with status code: ${existingAttempt.statusCode}`);
     }
 
-    const currentAttemptCount = await this.getAttemptCount(
+    const currentAttemptNumber = await this.getMaxAttemptNumber(
       existingAttempt.eventId,
       existingAttempt.endpointId
     );
 
-    if (!this.retryStrategy.canRetryByAttempt(currentAttemptCount)) {
+    if (!this.retryStrategy.canRetryByAttempt(currentAttemptNumber)) {
       throw new MaxAttemptsExceededError(
         existingAttempt.eventId,
         existingAttempt.endpointId,
-        currentAttemptCount,
+        currentAttemptNumber,
         this.retryStrategy.getMaxAttempts()
       );
     }
 
-    const newAttemptNumber = currentAttemptCount + 1;
+    const newAttemptNumber = currentAttemptNumber + 1;
 
     return this.executeDelivery(
       existingAttempt.event,
