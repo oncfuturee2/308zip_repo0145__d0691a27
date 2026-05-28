@@ -37,26 +37,31 @@ export function registerEventRoutes(
             createdAt: event.createdAt
           },
           matchedEndpoints: 0,
-          deliveryAttempts: []
+          queuedTasks: []
         });
       }
 
-      const deliveryAttempts = [];
+      const tasks = await deps.queueService.enqueueBatch(
+        matchingEndpoints.map((ep) => ({
+          eventId: event.id,
+          endpointId: ep.id
+        }))
+      );
 
-      for (const endpoint of matchingEndpoints) {
-        const attempt = await deps.deliveryService.executeDelivery(event, endpoint, 1);
-        deliveryAttempts.push(attempt);
-      }
-
-      return reply.status(201).send({
-        message: 'Event created and delivered to matching endpoints',
+      return reply.status(202).send({
+        message: 'Event accepted, delivery tasks queued',
         event: {
           id: event.id,
           eventType: event.eventType,
           createdAt: event.createdAt
         },
         matchedEndpoints: matchingEndpoints.length,
-        deliveryAttempts
+        queuedTasks: tasks.map((t) => ({
+          id: t.id,
+          endpointId: t.endpointId,
+          status: t.status,
+          createdAt: t.createdAt
+        }))
       });
     }
   );

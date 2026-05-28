@@ -50,3 +50,21 @@ model DeliveryAttempt {
   @@index([createdAt])
   @@unique([eventId, endpointId, attemptNumber])
 }
+
+model DeliveryTask {
+  id             String         @id @default(uuid())
+  eventId        String
+  endpointId     String
+  status         String         @default("pending")
+  attemptNumber  Int            @default(0)
+  nextRetryAt    DateTime       @default(now())
+  lastError      String?
+  lastStatusCode Int?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  event          WebhookEvent    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  endpoint       WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextRetryAt])
+}

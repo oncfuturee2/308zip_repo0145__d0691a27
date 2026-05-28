@@ -7,7 +7,8 @@ import {
   WebhookEndpointService,
   WebhookEventService,
   DeliveryService,
-  StatisticsService
+  StatisticsService,
+  DeliveryQueueService
 } from '../services';
 import {
   EventMatcher,
@@ -23,6 +24,7 @@ export interface RouteDeps {
   deliveryService: DeliveryService;
   statisticsService: StatisticsService;
   eventMatcher: EventMatcher;
+  queueService: DeliveryQueueService;
 }
 
 export function createDeps(): RouteDeps {
@@ -36,13 +38,15 @@ export function createDeps(): RouteDeps {
   const eventService = new WebhookEventService(eventMatcher);
   const deliveryService = new DeliveryService(deliveryExecutor, retryStrategy);
   const statisticsService = new StatisticsService();
+  const queueService = new DeliveryQueueService();
 
   return {
     endpointService,
     eventService,
     deliveryService,
     statisticsService,
-    eventMatcher
+    eventMatcher,
+    queueService
   };
 }
 
