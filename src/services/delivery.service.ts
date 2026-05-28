@@ -180,6 +180,10 @@ export class DeliveryService {
     return this.retryStrategy.canRetry(statusCode);
   }
 
+  getNextDelayMs(attemptNumber: number): number {
+    return this.retryStrategy.getNextDelayMs(attemptNumber);
+  }
+
   getNextAttemptNumber(existingAttempts: number): number {
     return existingAttempts + 1;
   }

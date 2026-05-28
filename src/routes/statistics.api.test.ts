@@ -13,6 +13,7 @@ describe('Statistics API', () => {
   });
 
   afterAll(async () => {
+    deps.workerService.stop();
     await app.close();
   });
 
