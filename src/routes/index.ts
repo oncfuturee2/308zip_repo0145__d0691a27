@@ -3,6 +3,7 @@ import { registerEndpointRoutes } from './endpoints';
 import { registerEventRoutes } from './events';
 import { registerDeliveryRoutes } from './deliveries';
 import { registerStatisticsRoutes } from './statistics';
+import { prisma } from '../services/prisma-client';
 import {
   WebhookEndpointService,
   WebhookEventService,
@@ -59,5 +60,21 @@ export async function registerRoutes(
 
   fastify.get('/health', async () => {
     return { status: 'ok', timestamp: new Date().toISOString() };
+  });
+
+  fastify.get('/health/detailed', async () => {
+    const [activeEndpoints, totalEvents, failedDeliveries] = await Promise.all([
+      prisma.webhookEndpoint.count({ where: { isActive: true } }),
+      prisma.webhookEvent.count(),
+      prisma.deliveryAttempt.count({ where: { isSuccess: false } }),
+    ]);
+
+    return {
+      status: 'ok',
+      activeEndpoints,
+      totalEvents,
+      failedDeliveries,
+      timestamp: new Date().toISOString()
+    };
   });
 }
