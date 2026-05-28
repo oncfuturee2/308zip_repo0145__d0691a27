@@ -11,12 +11,15 @@ async function startServer() {
 
   const deps = createDeps();
   await registerRoutes(app, deps);
+  
+  deps.deliveryWorker.start();
 
   try {
     const address = await app.listen({ port: PORT, host: HOST });
     console.log(`Server is running at ${address}`);
     console.log(`Health check: ${address}/health`);
     console.log(`API prefix: ${address}/api`);
+    console.log('Delivery worker started');
   } catch (err) {
     app.log.error(err);
     process.exit(1);

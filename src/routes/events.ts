@@ -28,35 +28,18 @@ export function registerEventRoutes(
         body.eventType
       );
 
-      if (matchingEndpoints.length === 0) {
-        return reply.status(201).send({
-          message: 'Event created, no matching endpoints found',
-          event: {
-            id: event.id,
-            eventType: event.eventType,
-            createdAt: event.createdAt
-          },
-          matchedEndpoints: 0,
-          deliveryAttempts: []
-        });
-      }
-
-      const deliveryAttempts = [];
-
       for (const endpoint of matchingEndpoints) {
-        const attempt = await deps.deliveryService.executeDelivery(event, endpoint, 1);
-        deliveryAttempts.push(attempt);
+        await deps.deliveryQueueService.enqueue(event.id, endpoint.id, 1);
       }
 
-      return reply.status(201).send({
-        message: 'Event created and delivered to matching endpoints',
+      return reply.status(202).send({
+        message: 'Event created and queued for delivery',
         event: {
           id: event.id,
           eventType: event.eventType,
           createdAt: event.createdAt
         },
-        matchedEndpoints: matchingEndpoints.length,
-        deliveryAttempts
+        matchedEndpoints: matchingEndpoints.length
       });
     }
   );

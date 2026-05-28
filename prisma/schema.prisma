@@ -50,3 +50,22 @@ model DeliveryAttempt {
   @@index([createdAt])
   @@unique([eventId, endpointId, attemptNumber])
 }
+
+model DeliveryQueue {
+  id             String         @id @default(uuid())
+  eventId        String
+  endpointId     String
+  event          WebhookEvent   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  endpoint       WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  status         String         @default("pending")
+  attemptNumber  Int            @default(1)
+  nextRunAt      DateTime       @default(now())
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([status])
+  @@index([nextRunAt])
+  @@index([eventId])
+  @@index([endpointId])
+  @@unique([eventId, endpointId])
+}
