@@ -124,7 +124,18 @@ export class DeliveryService {
       );
     }
 
-    const newAttemptNumber = currentAttemptCount + 1;
+    const maxAttemptResult = await prisma.deliveryAttempt.aggregate({
+      where: {
+        eventId: existingAttempt.eventId,
+        endpointId: existingAttempt.endpointId
+      },
+      _max: {
+        attemptNumber: true
+      }
+    });
+
+    const maxAttemptNumber = maxAttemptResult._max.attemptNumber || 0;
+    const newAttemptNumber = maxAttemptNumber + 1;
 
     return this.executeDelivery(
       existingAttempt.event,
