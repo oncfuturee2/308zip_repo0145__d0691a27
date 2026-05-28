@@ -22,6 +22,8 @@ export class MaxAttemptsExceededError extends Error {
 export class DeliveryService {
   private readonly deliveryExecutor: DeliveryExecutor;
   private readonly retryStrategy: RetryStrategy;
+  private readonly deliveryInclude = { event: true, endpoint: true };
+  private readonly deliveryOrderBy = { createdAt: 'desc' as const };
 
   constructor(
     deliveryExecutor: DeliveryExecutor,
@@ -99,7 +101,7 @@ export class DeliveryService {
   async retryDelivery(attemptId: string): Promise<DeliveryAttempt> {
     const existingAttempt = await prisma.deliveryAttempt.findUnique({
       where: { id: attemptId },
-      include: { event: true, endpoint: true }
+      include: this.deliveryInclude
     });
 
     if (!existingAttempt) {
@@ -136,30 +138,30 @@ export class DeliveryService {
   async findByEndpointId(endpointId: string): Promise<DeliveryAttemptWithDetails[]> {
     return prisma.deliveryAttempt.findMany({
       where: { endpointId },
-      include: { event: true, endpoint: true },
-      orderBy: { createdAt: 'desc' }
+      include: this.deliveryInclude,
+      orderBy: this.deliveryOrderBy
     });
   }
 
   async findByEventId(eventId: string): Promise<DeliveryAttemptWithDetails[]> {
     return prisma.deliveryAttempt.findMany({
       where: { eventId },
-      include: { event: true, endpoint: true },
-      orderBy: { createdAt: 'desc' }
+      include: this.deliveryInclude,
+      orderBy: this.deliveryOrderBy
     });
   }
 
   async findById(attemptId: string): Promise<DeliveryAttemptWithDetails | null> {
     return prisma.deliveryAttempt.findUnique({
       where: { id: attemptId },
-      include: { event: true, endpoint: true }
+      include: this.deliveryInclude
     });
   }
 
   async findAll(): Promise<DeliveryAttemptWithDetails[]> {
     return prisma.deliveryAttempt.findMany({
-      include: { event: true, endpoint: true },
-      orderBy: { createdAt: 'desc' }
+      include: this.deliveryInclude,
+      orderBy: this.deliveryOrderBy
     });
   }
 
@@ -171,8 +173,8 @@ export class DeliveryService {
 
     return prisma.deliveryAttempt.findMany({
       where,
-      include: { event: true, endpoint: true },
-      orderBy: { createdAt: 'desc' }
+      include: this.deliveryInclude,
+      orderBy: this.deliveryOrderBy
     });
   }
 
