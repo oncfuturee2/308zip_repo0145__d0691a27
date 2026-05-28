@@ -60,4 +60,19 @@ export async function registerRoutes(
   fastify.get('/health', async () => {
     return { status: 'ok', timestamp: new Date().toISOString() };
   });
+
+  fastify.get('/health/detailed', async (_request, reply) => {
+    try {
+      const healthStatus = await deps.statisticsService.getDetailedHealthStatus();
+      return reply.send(healthStatus);
+    } catch {
+      return reply.status(503).send({
+        status: 'error',
+        activeEndpoints: 0,
+        totalEvents: 0,
+        failedDeliveries: 0,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
 }
