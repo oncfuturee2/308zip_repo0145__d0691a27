@@ -1,7 +1,7 @@
 import fastify from 'fastify';
 import { registerRoutes, createDeps } from './routes';
 
-const PORT = parseInt(process.env.PORT || '3000', 10);
+const PORT = parseInt(process.env.PORT || '18076', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 
 async function startServer() {
