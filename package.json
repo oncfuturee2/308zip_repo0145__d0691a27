@@ -9,6 +9,7 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "test": "vitest run",
+    "test:isolated": "bash repo/scripts/run-isolated-tests.sh",
     "test:watch": "vitest",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
