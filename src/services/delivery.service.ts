@@ -22,6 +22,8 @@ export class MaxAttemptsExceededError extends Error {
 export class DeliveryService {
   private readonly deliveryExecutor: DeliveryExecutor;
   private readonly retryStrategy: RetryStrategy;
+  private readonly defaultInclude = { event: true, endpoint: true };
+  private readonly defaultOrderBy = { createdAt: 'desc' };
 
   constructor(
     deliveryExecutor: DeliveryExecutor,
@@ -136,16 +138,16 @@ export class DeliveryService {
   async findByEndpointId(endpointId: string): Promise<DeliveryAttemptWithDetails[]> {
     return prisma.deliveryAttempt.findMany({
       where: { endpointId },
-      include: { event: true, endpoint: true },
-      orderBy: { createdAt: 'desc' }
+      include: this.defaultInclude,
+      orderBy: this.defaultOrderBy
     });
   }
 
   async findByEventId(eventId: string): Promise<DeliveryAttemptWithDetails[]> {
     return prisma.deliveryAttempt.findMany({
       where: { eventId },
-      include: { event: true, endpoint: true },
-      orderBy: { createdAt: 'desc' }
+      include: this.defaultInclude,
+      orderBy: this.defaultOrderBy
     });
   }
 
@@ -158,8 +160,8 @@ export class DeliveryService {
 
   async findAll(): Promise<DeliveryAttemptWithDetails[]> {
     return prisma.deliveryAttempt.findMany({
-      include: { event: true, endpoint: true },
-      orderBy: { createdAt: 'desc' }
+      include: this.defaultInclude,
+      orderBy: this.defaultOrderBy
     });
   }
 
@@ -171,8 +173,8 @@ export class DeliveryService {
 
     return prisma.deliveryAttempt.findMany({
       where,
-      include: { event: true, endpoint: true },
-      orderBy: { createdAt: 'desc' }
+      include: this.defaultInclude,
+      orderBy: this.defaultOrderBy
     });
   }
 
