@@ -60,4 +60,8 @@ export async function registerRoutes(
   fastify.get('/health', async () => {
     return { status: 'ok', timestamp: new Date().toISOString() };
   });
+
+  fastify.get('/health/detailed', async () => {
+    return deps.statisticsService.getDetailedHealth();
+  });
 }

@@ -40,6 +40,14 @@ export interface TimeRangeFilter {
   endTime?: Date;
 }
 
+export interface DetailedHealthResponse {
+  status: string;
+  activeEndpoints: number;
+  totalEvents: number;
+  failedDeliveries: number;
+  timestamp: string;
+}
+
 export class StatisticsService {
   buildWhereClause(timeRange?: TimeRangeFilter): Record<string, unknown> {
     const where: Record<string, unknown> = {};
@@ -185,6 +193,22 @@ export class StatisticsService {
     }
 
     return result.sort((a, b) => b.count - a.count);
+  }
+
+  async getDetailedHealth(): Promise<DetailedHealthResponse> {
+    const [activeEndpoints, totalEvents, failedDeliveries] = await Promise.all([
+      prisma.webhookEndpoint.count({ where: { isActive: true } }),
+      prisma.webhookEvent.count(),
+      prisma.deliveryAttempt.count({ where: { isSuccess: false } }),
+    ]);
+
+    return {
+      status: 'ok',
+      activeEndpoints,
+      totalEvents,
+      failedDeliveries,
+      timestamp: new Date().toISOString(),
+    };
   }
 
   async getStatistics(timeRange?: TimeRangeFilter): Promise<StatisticsResult> {
